@@ -5,7 +5,7 @@
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![Terraform 1.7.0](https://img.shields.io/badge/terraform-1.7.0-purple.svg)](https://www.terraform.io/)
 
-A fail-closed DevSecOps continuous integration and deployment gatekeeper enforcing deterministic data ingestion, static AST/secret scanning, and compliant Infrastructure-as-Code (IaC) provisioning for Google Cloud BigQuery.
+"fail-closed CI/CD gatekeeper that blocks merges when validation or security gates fail."
 
 ---
 

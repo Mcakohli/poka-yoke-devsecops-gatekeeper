@@ -1,21 +1,14 @@
-# ==============================================================================
-# CANDIDATE DETAILS
-# Full Name: Rahul Kohli
-# Position: Junior Cloud & DevOps Engineer (GCP / Django / React)
-# Document: Task 1 - Infrastructure-as-Code (Terraform Outputs)
-# ==============================================================================
-
-output "raw_bucket_name" {
-  value       = google_storage_bucket.raw_landing_bucket.name
-  description = "Name of the raw landing GCS bucket"
+output "gcs_raw_landing_bucket_name" {
+  description = "The name of the D0 Raw Landing storage bucket"
+  value       = google_storage_bucket.d0_raw_landing.name
 }
 
 output "bigquery_dataset_id" {
-  value       = google_bigquery_dataset.staged_enforced_dataset.dataset_id
-  description = "ID of the staged BigQuery dataset"
+  description = "The ID of the D1 Staged Enforced dataset"
+  value       = google_bigquery_dataset.d1_staged_enforced.dataset_id
 }
 
 output "bigquery_table_id" {
+  description = "The ID of the student onboarding table"
   value       = google_bigquery_table.student_onboarding_staged.table_id
-  description = "ID of the student onboarding BigQuery table"
 }

@@ -104,25 +104,15 @@ resource "google_bigquery_dataset_iam_member" "conditional_analyst_access" {
   }
 }
 
-# 5. BigQuery Row-Level Security (RLS) Policy
-# Enforces that assigned LSAs can only query records requiring assistance
-resource "google_bigquery_table_iam_policy" "student_rls_filter" {
-  project     = var.project_id
-  dataset_id  = google_bigquery_dataset.d1_staged_enforced.dataset_id
-  table_id    = google_bigquery_table.student_onboarding_staged.table_id
-  policy_data = data.google_iam_policy.table_viewer_policy.policy_data
-}
+# 5. Native BigQuery Row-Level Security (Row Access Policy)
+resource "google_bigquery_row_access_policy" "lsa_assistance_required_filter" {
+  project          = var.project_id
+  dataset_id       = google_bigquery_dataset.d1_staged_enforced.dataset_id
+  table_id         = google_bigquery_table.student_onboarding_staged.table_id
+  policy_tag       = "lsa_assistance_required_only"
+  filter_predicate = "requires_lsa_dcyn = 1"
 
-data "google_iam_policy" "table_viewer_policy" {
-  binding {
-    role = "roles/bigquery.filteredDataViewer"
-    members = [
-      "group:lsa-support-staff@habotconnect.com"
-    ]
-    condition {
-      title       = "lsa_required_only"
-      description = "Filter records where LSA assistance is actively required (DCYN == 1)"
-      expression  = "resource.name.endsWith('/tables/student_onboarding_enforced')"
-    }
-  }
+  grantees = [
+    "group:lsa-support-staff@habotconnect.com"
+  ]
 }

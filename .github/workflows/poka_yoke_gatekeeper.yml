@@ -1,10 +1,3 @@
-# ==============================================================================
-# CANDIDATE DETAILS
-# Full Name: Rahul Kohli
-# Position: Junior Cloud & DevOps Engineer (GCP / Django / React)
-# Document: Task 2 - DevSecOps CI/CD Quality Gatekeeper Workflow
-# ==============================================================================
-
 name: Poka-Yoke CI/CD Gatekeeper
 
 on:
@@ -19,9 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ----------------------------------------------------------------------------
-  # JOB 1: Code Quality, Linting & Unit Testing (Python / DRF)
-  # ----------------------------------------------------------------------------
   backend-quality-and-tests:
     name: Backend Linting & Test Suite
     runs-on: ubuntu-latest
@@ -46,18 +36,13 @@ jobs:
 
       - name: Run Flake8 Code Linter
         run: |
-          # Stop build if there are Python syntax errors or undefined names
           flake8 backend/ --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Exit-zero treats all errors as warnings. Max line length set to 88 per Black standard
           flake8 backend/ --count --max-line-length=88 --statistics
 
-      - name: Run Pytest Unit Tests & Coverage
+      - name: Run Pytest Unit Tests
         run: |
           pytest backend/tests/ -v
 
-  # ----------------------------------------------------------------------------
-  # JOB 2: DevSecOps Vulnerability & Secret Scanning
-  # ----------------------------------------------------------------------------
   security-and-vulnerability-scan:
     name: DevSecOps Security Gatekeeper
     runs-on: ubuntu-latest
@@ -75,7 +60,6 @@ jobs:
       - name: Run Bandit AST Static Security Analysis
         run: |
           pip install bandit
-          # Scans Python AST for common security issues (e.g. hardcoded passwords, SQL injection)
           bandit -r backend/ -ll -ii
 
       - name: Run TruffleHog Secret Leak Detection
@@ -94,9 +78,6 @@ jobs:
           format: "table"
           severity: "CRITICAL,HIGH"
 
-  # ----------------------------------------------------------------------------
-  # JOB 3: Infrastructure-as-Code (Terraform) Gatekeeper
-  # ----------------------------------------------------------------------------
   terraform-iac-gatekeeper:
     name: Terraform Lint & Validation
     runs-on: ubuntu-latest

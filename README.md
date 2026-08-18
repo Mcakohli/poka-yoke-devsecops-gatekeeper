@@ -67,3 +67,4 @@ pytest backend/tests/ -v
 cd infrastructure/terraform
 terraform init -backend=false
 terraform validate
+```

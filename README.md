@@ -26,6 +26,7 @@ graph TD
         I -->|Yes| J[Merge to Main Allowed]
         I -->|No| K[Pipeline Blocked]
     end
+```
 
 1. **Poka-Yoke Ingestion (Mistake-Proofing)**:
    * Employs Django REST Framework (DRF) serializers with custom deterministic converters (`DCYN` logic).

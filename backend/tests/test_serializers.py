@@ -44,3 +44,29 @@ def test_invalid_ambiguous_payload_fails():
     serializer = StudentOnboardingSerializer(data=payload)
     assert not serializer.is_valid()
     assert "learning_disability_response" in serializer.errors
+
+
+def test_student_id_over_50_characters_fails():
+    """Verify that student_id exceeding max_length=50 is rejected."""
+    payload = {
+        "student_id": "A" * 51,
+        "parent_email": "parent4@example.com",
+        "learning_disability_response": "Yes",
+        "lsa_assistance_response": "No",
+    }
+    serializer = StudentOnboardingSerializer(data=payload)
+    assert not serializer.is_valid()
+    assert "student_id" in serializer.errors
+
+
+def test_invalid_email_format_fails():
+    """Verify that malformed parent email strings fail validation."""
+    payload = {
+        "student_id": "STU-99205",
+        "parent_email": "not-a-valid-email-address",
+        "learning_disability_response": "Yes",
+        "lsa_assistance_response": "No",
+    }
+    serializer = StudentOnboardingSerializer(data=payload)
+    assert not serializer.is_valid()
+    assert "parent_email" in serializer.errors

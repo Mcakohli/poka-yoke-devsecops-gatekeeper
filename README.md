@@ -44,7 +44,7 @@ graph TD
 
 | Gatekeeper Job | Tools Used | Enforcement Objective |
 | :--- | :--- | :--- |
-| **Backend Quality & Tests** | `black`, `flake8`, `pytest` | Code standard formatting, syntax linting, and 100% unit test coverage. |
+| **Backend Quality & Tests** | `black`, `flake8`, `pytest` | Code standard formatting, syntax linting, and Automated unit tests covering positive, negative, and ambiguous DCYN inputs. |
 | **DevSecOps Security** | `bandit`, `trufflehog`, `trivy` | Zero AST security vulnerabilities, zero committed secrets, and CVE scanning. |
 | **Terraform IaC** | `terraform fmt`, `terraform validate` | Strict HCL canonical formatting and valid resource dependency graphs. |
 

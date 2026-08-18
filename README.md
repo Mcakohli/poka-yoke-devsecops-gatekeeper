@@ -37,8 +37,7 @@ graph TD
    * **TruffleHog**: High-entropy verified credential and secret leak detection.
    * **Trivy**: Comprehensive filesystem vulnerability and misconfiguration scanning.
 3. **Infrastructure-as-Code Compliance**:
-   * Automated modular Terraform linting (`fmt`) and semantic validation (`validate`) for BigQuery dataset provisioning and IAM role bindings.
-
+Terraform validation: terraform fmt -check, terraform init -backend=false, and terraform validate were executed successfully. terraform plan/apply requires authentication to a GCP project and was not executed as part of the repository-only validation.
 ---
 
 ## CI/CD Pipeline Matrix

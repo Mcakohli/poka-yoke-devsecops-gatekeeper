@@ -1,0 +1,19 @@
+# Python & Testing artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.sqlite3
+
+# Terraform local state and providers
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Environment & OS artifacts
+.env
+.venv
+env/
+venv/
+.DS_Store
+Thumbs.db

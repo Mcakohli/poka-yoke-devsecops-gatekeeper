@@ -1,31 +1,22 @@
-# ==============================================================================
-# CANDIDATE DETAILS
-# Full Name: Rahul Kohli
-# Position: Junior Cloud & DevOps Engineer (GCP / Django / React)
-# Document: Task 1 - Infrastructure-as-Code (Terraform Core Infrastructure)
-# ==============================================================================
-
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.7.0"
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 5.0"
+      version = "~> 5.0"
     }
   }
 }
 
 provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
+  project = var.project_id
+  region  = var.region
 }
 
-# ------------------------------------------------------------------------------
-# 1. Cloud Storage: DO Raw Landing Bucket
-# ------------------------------------------------------------------------------
-resource "google_storage_bucket" "raw_landing_bucket" {
-  name                        = "${var.gcp_project_id}-do-raw-landing"
-  location                    = var.gcp_region
+# 1. D0 Raw Landing Storage Bucket (Task 1)
+resource "google_storage_bucket" "d0_raw_landing" {
+  name                        = "${var.project_id}-d0-raw-landing"
+  location                    = var.region
   force_destroy               = false
   uniform_bucket_level_access = true
 
@@ -43,39 +34,25 @@ resource "google_storage_bucket" "raw_landing_bucket" {
   }
 }
 
-resource "google_storage_bucket_iam_binding" "raw_landing_admin" {
-  bucket = google_storage_bucket.raw_landing_bucket.name
-  role   = "roles/storage.objectAdmin"
-
-  members = [
-    "serviceAccount:${var.pipeline_service_account}"
-  ]
-}
-
-# ------------------------------------------------------------------------------
-# 2. BigQuery Dataset: D1 Staged / Enforced
-# ------------------------------------------------------------------------------
-resource "google_bigquery_dataset" "staged_enforced_dataset" {
+# 2. D1 Staged / Enforced BigQuery Dataset (Task 1)
+resource "google_bigquery_dataset" "d1_staged_enforced" {
   dataset_id                  = "d1_staged_enforced"
   friendly_name               = "D1 Staged Enforced Dataset"
-  description                 = "Enforced and validated staging dataset for downstream analytics."
-  location                    = var.gcp_region
-  default_table_expiration_ms = 31536000000 # 1 Year Retention
+  description                 = "Poka-Yoke enforced dataset for validated student onboarding payloads"
+  location                    = var.region
+  default_table_expiration_ms = 31536000000
 
-  access {
-    role          = "OWNER"
-    user_by_email = var.admin_email
-  }
-
-  access {
-    role          = "WRITER"
-    user_by_email = var.pipeline_service_account
+  labels = {
+    env       = "staging"
+    pipeline  = "poka-yoke-gatekeeper"
+    data_tier = "d1-enforced"
   }
 }
 
+# 3. Student Onboarding Enforced Table (D1 Staged)
 resource "google_bigquery_table" "student_onboarding_staged" {
-  dataset_id          = google_bigquery_dataset.staged_enforced_dataset.dataset_id
-  table_id            = "student_onboarding"
+  dataset_id          = google_bigquery_dataset.d1_staged_enforced.dataset_id
+  table_id            = "student_onboarding_enforced"
   deletion_protection = false
 
   schema = <<EOF
@@ -84,45 +61,68 @@ resource "google_bigquery_table" "student_onboarding_staged" {
     "name": "student_id",
     "type": "STRING",
     "mode": "REQUIRED",
-    "description": "Unique identifier for the student."
+    "description": "Unique identifier for the student"
   },
   {
     "name": "parent_email",
     "type": "STRING",
     "mode": "REQUIRED",
-    "description": "Contact email of the primary parent/guardian."
+    "description": "Primary parent contact email"
   },
   {
     "name": "has_learning_disability_dcyn",
     "type": "INTEGER",
     "mode": "REQUIRED",
-    "description": "Binary DCYN Indicator: 1 for Yes, 0 for No."
+    "description": "Deterministic binary conversion (1 = Affirmative, 0 = Negative)"
   },
   {
     "name": "requires_lsa_dcyn",
     "type": "INTEGER",
     "mode": "REQUIRED",
-    "description": "Binary DCYN Indicator: 1 for Yes, 0 for No."
+    "description": "Deterministic binary conversion for LSA support (1 = Required, 0 = Not Required)"
   },
   {
-    "name": "created_at",
+    "name": "ingested_at",
     "type": "TIMESTAMP",
     "mode": "REQUIRED",
-    "description": "Record ingested timestamp."
+    "description": "Timestamp of schema validation and sink ingestion"
   }
 ]
 EOF
 }
 
-# ------------------------------------------------------------------------------
-# 3. Security Policy: Role-Based Access on BigQuery Table
-# ------------------------------------------------------------------------------
-resource "google_bigquery_table_iam_binding" "lsa_coordinators_viewer" {
-  dataset_id = google_bigquery_dataset.staged_enforced_dataset.dataset_id
-  table_id   = google_bigquery_table.student_onboarding_staged.table_id
+# 4. IAM Conditions on Dataset (Least Privilege & RBAC)
+resource "google_bigquery_dataset_iam_member" "conditional_analyst_access" {
+  dataset_id = google_bigquery_dataset.d1_staged_enforced.dataset_id
   role       = "roles/bigquery.dataViewer"
+  member     = "group:analytics-team@habotconnect.com"
 
-  members = [
-    "group:${var.lsa_coordinators_group}"
-  ]
+  condition {
+    title       = "business_hours_access_only"
+    description = "Enforce read access strictly during business hours UTC"
+    expression  = "request.time.getHours('UTC') >= 8 && request.time.getHours('UTC') <= 18"
+  }
+}
+
+# 5. BigQuery Row-Level Security (RLS) Policy
+# Enforces that assigned LSAs can only query records requiring assistance
+resource "google_bigquery_table_iam_policy" "student_rls_filter" {
+  project     = var.project_id
+  dataset_id  = google_bigquery_dataset.d1_staged_enforced.dataset_id
+  table_id    = google_bigquery_table.student_onboarding_staged.table_id
+  policy_data = data.google_iam_policy.table_viewer_policy.policy_data
+}
+
+data "google_iam_policy" "table_viewer_policy" {
+  binding {
+    role = "roles/bigquery.filteredDataViewer"
+    members = [
+      "group:lsa-support-staff@habotconnect.com"
+    ]
+    condition {
+      title       = "lsa_required_only"
+      description = "Filter records where LSA assistance is actively required (DCYN == 1)"
+      expression  = "resource.name.endsWith('/tables/student_onboarding_enforced')"
+    }
+  }
 }

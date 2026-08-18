@@ -10,6 +10,22 @@ A fail-closed DevSecOps continuous integration and deployment gatekeeper enforci
 ---
 
 ## Architecture & Engineering Principles
+```mermaid
+graph TD
+    A[Client / Ingestion Payload] -->|HTTP POST| B[DRF Serializer: DCYN Converter]
+    B -->|Ambiguous Inputs Blocked| C[400 Validation Error]
+    B -->|Deterministic 0 or 1| D[Validated Sink / BigQuery Ingestion]
+    
+    subgraph CI_CD_Gatekeeper [GitHub Actions Fail-Closed CI/CD Pipeline]
+        E[Git Push / PR] --> F[Backend Suite: Black, Flake8, Pytest]
+        E --> G[DevSecOps Gate: Bandit AST, TruffleHog, Trivy]
+        E --> H[IaC Gate: Terraform fmt, validate]
+        F --> I{All Pass?}
+        G --> I
+        H --> I
+        I -->|Yes| J[Merge to Main Allowed]
+        I -->|No| K[Pipeline Blocked]
+    end
 
 1. **Poka-Yoke Ingestion (Mistake-Proofing)**:
    * Employs Django REST Framework (DRF) serializers with custom deterministic converters (`DCYN` logic).

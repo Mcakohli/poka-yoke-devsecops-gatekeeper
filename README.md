@@ -14,17 +14,18 @@
 graph TD
     A[Client / Ingestion Payload] -->|HTTP POST| B[DRF Serializer: DCYN Converter]
     B -->|Ambiguous Inputs Blocked| C[400 Validation Error]
-    B -->|Deterministic 0 or 1| D[Validated Sink / BigQuery Ingestion]
+    B -->|Deterministic Output: 0 or 1| D[Validated Payload Model]
+    D -.->|Schema Contract Target| E[(BigQuery D1 Staged Sink - Provisioned via IaC)]
     
     subgraph CI_CD_Gatekeeper [GitHub Actions Fail-Closed CI/CD Pipeline]
-        E[Git Push / PR] --> F[Backend Suite: Black, Flake8, Pytest]
-        E --> G[DevSecOps Gate: Bandit AST, TruffleHog, Trivy]
-        E --> H[IaC Gate: Terraform fmt, validate]
-        F --> I{All Pass?}
-        G --> I
-        H --> I
-        I -->|Yes| J[Merge to Main Allowed]
-        I -->|No| K[Pipeline Blocked]
+        F[Git Push / PR] --> G[Backend Suite: Black, Flake8, Pytest]
+        F --> H[DevSecOps Gate: Bandit AST, TruffleHog, Trivy]
+        F --> I[IaC Gate: Terraform fmt, validate]
+        G --> J{All Pass?}
+        H --> J
+        I --> J
+        J -->|Yes| K[Merge to Main Allowed]
+        J -->|No| L[Pipeline Blocked]
     end
 ```
 

@@ -1,10 +1,3 @@
-# ==============================================================================
-# Full Name: Rahul Kohli
-# Position: Junior Cloud & DevOps Engineer (GCP / Django / React)
-# Document: Task 3 - Serializer & DCYN Unit Test Suite
-# ==============================================================================
-
-import pytest
 from backend.serializers import StudentOnboardingSerializer
 
 
@@ -45,7 +38,7 @@ def test_invalid_ambiguous_payload_fails():
     payload = {
         "student_id": "STU-99203",
         "parent_email": "parent3@example.com",
-        "learning_disability_response": "Maybe",  # Ambiguous string
+        "learning_disability_response": "Maybe",
         "lsa_assistance_response": "No",
     }
     serializer = StudentOnboardingSerializer(data=payload)

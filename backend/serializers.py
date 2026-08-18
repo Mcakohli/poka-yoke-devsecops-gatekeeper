@@ -7,6 +7,7 @@ class StudentOnboardingSerializer(serializers.Serializer):
     Poka-Yoke Serializer for Student Onboarding payloads.
     Transforms freeform text responses into explicit binary DCYN integer flags.
     """
+
     student_id = serializers.CharField(max_length=50, required=True)
     parent_email = serializers.EmailField(required=True)
 
@@ -20,7 +21,8 @@ class StudentOnboardingSerializer(serializers.Serializer):
         errors = {}
         try:
             attrs["has_learning_disability_dcyn"] = convert_to_dcyn(
-                attrs.get("learning_disability_response"), "learning_disability_response"
+                attrs.get("learning_disability_response"),
+                "learning_disability_response",
             )
         except Exception as e:
             errors["learning_disability_response"] = str(e)
@@ -41,6 +43,8 @@ class StudentOnboardingSerializer(serializers.Serializer):
         return {
             "student_id": validated_data["student_id"],
             "parent_email": validated_data["parent_email"],
-            "has_learning_disability_dcyn": validated_data["has_learning_disability_dcyn"],
+            "has_learning_disability_dcyn": validated_data[
+                "has_learning_disability_dcyn"
+            ],
             "requires_lsa_dcyn": validated_data["requires_lsa_dcyn"],
         }

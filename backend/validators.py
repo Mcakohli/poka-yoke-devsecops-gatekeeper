@@ -1,32 +1,45 @@
-﻿# ==============================================================================
-# Full Name: Rahul Kohli
-# Position: Junior Cloud & DevOps Engineer (GCP / Django / React)
-# Document: Task 3 - DCYN Binary Validation Logic Library
-# ==============================================================================
-
 from rest_framework.exceptions import ValidationError
+
+AFFIRMATIVE_RESPONSES = {
+    "yes",
+    "y",
+    "true",
+    "1",
+    "required",
+    "needed",
+    "affirmative",
+    "positive",
+}
+
+NEGATIVE_RESPONSES = {
+    "no",
+    "n",
+    "false",
+    "0",
+    "none",
+    "not required",
+    "not needed",
+    "negative",
+}
 
 
 def convert_to_dcyn(value: str, field_name: str) -> int:
     """
-    DCYN (Deterministic Convert Yes/No) Library:
-    Converts flexible form strings to deterministic 1 (Yes) or 0 (No).
-    Raises ValidationError for ambiguous or unexpected inputs to eliminate
-    human judgment and prevent schema mismatches in BigQuery sinks.
+    Transforms loose human responses into deterministic binary DCYN values (1 or 0).
+    Blocks ambiguous strings to maintain downstream BigQuery integrity.
     """
-    if not isinstance(value, str):
-        raise ValidationError(f"Field '{field_name}' must be a string value.")
+    if value is None:
+        raise ValidationError(f"Field '{field_name}' cannot be null.")
 
-    cleaned_value = value.strip().lower()
+    normalized = str(value).strip().lower()
 
-    affirmative_patterns = {"yes", "true", "1", "y", "affirmative", "required"}
-    negative_patterns = {"no", "false", "0", "n", "negative", "not required", "none"}
-
-    if cleaned_value in affirmative_patterns:
+    if normalized in AFFIRMATIVE_RESPONSES:
         return 1
-    elif cleaned_value in negative_patterns:
+    elif normalized in NEGATIVE_RESPONSES:
         return 0
-    else:
-        raise ValidationError(
-            f"Ambiguous value '{value}' in field '{field_name}' cannot be deterministically mapped to binary DCYN logic."
-        )
+
+    msg = (
+        f"Ambiguous value '{value}' in field '{field_name}' cannot be "
+        "deterministically mapped to binary DCYN logic."
+    )
+    raise ValidationError(msg)
